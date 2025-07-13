@@ -13,9 +13,6 @@ interface LocationState {
 
 interface SearchFilters {
   address: string;
-  useCurrentLocation: boolean;
-  radiusKm: number;
-  sortBy: 'distance' | 'availability' | 'price';
   selectedCoordinates?: { lat: number; lng: number }; // Store coordinates from selected suggestion
 }
 
@@ -35,10 +32,7 @@ export default function FindParkingPage() {
   });
   
   const [filters, setFilters] = useState<SearchFilters>({
-    address: '',
-    useCurrentLocation: false,
-    radiusKm: 2,
-    sortBy: 'distance'
+    address: ''
   });
 
   const [searchResults, setSearchResults] = useState<ParkingDto[]>([]);
@@ -48,8 +42,8 @@ export default function FindParkingPage() {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get user's current location
-  const getCurrentLocation = () => {
+  // Get user's current location and reverse geocode to address
+  const getCurrentLocation = async () => {
     setLocation(prev => ({ ...prev, loading: true, error: null }));
     
     if (!navigator.geolocation) {
@@ -62,14 +56,50 @@ export default function FindParkingPage() {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
         setLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude: lat,
+          longitude: lng,
           loading: false,
           error: null
         });
-        setFilters(prev => ({ ...prev, useCurrentLocation: true }));
+
+        // Store coordinates and try to get a readable address
+        setFilters(prev => ({ 
+          ...prev, 
+          selectedCoordinates: { lat, lng }
+        }));
+
+        // Reverse geocode to get address
+        try {
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.display_name) {
+              setFilters(prev => ({ 
+                ...prev, 
+                address: data.display_name,
+                selectedCoordinates: { lat, lng }
+              }));
+            } else {
+              setFilters(prev => ({ 
+                ...prev, 
+                address: `Current Location (${lat.toFixed(6)}, ${lng.toFixed(6)})`,
+                selectedCoordinates: { lat, lng }
+              }));
+            }
+          }
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error);
+          setFilters(prev => ({ 
+            ...prev, 
+            address: `Current Location (${lat.toFixed(6)}, ${lng.toFixed(6)})`,
+            selectedCoordinates: { lat, lng }
+          }));
+        }
       },
       (error) => {
         let errorMessage = 'Error getting location';
@@ -198,12 +228,12 @@ export default function FindParkingPage() {
   const searchNearbyParking = async () => {
     setIsSearching(true);
     try {
-      let searchLat = location.latitude;
-      let searchLng = location.longitude;
+      let searchLat: number | null = null;
+      let searchLng: number | null = null;
 
-      // If using address search instead of current location
-      if (!filters.useCurrentLocation && filters.address.trim()) {
-        // First check if we have coordinates from selected suggestion
+      // Check if we have an address or coordinates
+      if (filters.address.trim()) {
+        // First check if we have coordinates from selected suggestion or current location
         if (filters.selectedCoordinates) {
           searchLat = filters.selectedCoordinates.lat;
           searchLng = filters.selectedCoordinates.lng;
@@ -214,20 +244,22 @@ export default function FindParkingPage() {
             searchLat = coords.lat;
             searchLng = coords.lng;
           } else {
-            throw new Error('Address not found. Please try selecting from the suggestions or enter a more specific address in Istanbul.');
+            throw new Error('Address not found. Please try selecting from the suggestions or use the "Find My Location" button.');
           }
         }
+      } else {
+        throw new Error('Please enter an address or use the "Find My Location" button.');
       }
 
       if (!searchLat || !searchLng) {
         throw new Error('Location not specified. Please enter an address or use your current location.');
       }
 
-      // Call your API to search for nearby parking
-      let results = await parkingApi.getNearby(searchLat, searchLng, filters.radiusKm);
+      // Call your API to search for nearby parking (fixed 2km radius)
+      let results = await parkingApi.getNearby(searchLat, searchLng, 2);
       
-      // Sort results based on selected criteria
-      results = sortParkingResults(results, searchLat, searchLng, filters.sortBy);
+      // Sort results by distance (fixed sorting)
+      results = sortParkingResults(results, searchLat, searchLng, 'distance');
       
       setSearchResults(results);
       
@@ -323,174 +355,113 @@ export default function FindParkingPage() {
         <div className="card-body">
           <h2 className="card-title mb-4">Search & Filters</h2>
           
-          {/* Location Type Selection */}
-          <div className="form-control">
+          {/* Address Input with Find My Location and Search Buttons */}
+          <div className="form-control relative">
             <label className="label">
-              <span className="label-text font-medium">Search Type</span>
+              <span className="label-text font-medium">Enter Address or Use Current Location</span>
             </label>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <label className="label cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="searchType" 
-                  className="radio radio-primary" 
-                  checked={!filters.useCurrentLocation}
-                  onChange={() => setFilters(prev => ({ ...prev, useCurrentLocation: false }))}
-                />
-                <span className="label-text ml-2">Search by Address</span>
-              </label>
-              <label className="label cursor-pointer">
-                <input 
-                  type="radio" 
-                  name="searchType" 
-                  className="radio radio-primary" 
-                  checked={filters.useCurrentLocation}
-                  onChange={() => setFilters(prev => ({ ...prev, useCurrentLocation: true }))}
-                />
-                <span className="label-text ml-2">Use Current Location</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Address Input */}
-          {!filters.useCurrentLocation && (
-            <div className="form-control relative">
-              <label className="label">
-                <span className="label-text font-medium">Enter Address</span>
-              </label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="e.g., Taksim, Istanbul" 
-                  className="input input-bordered w-full"
-                  value={filters.address}
-                  onChange={(e) => handleAddressChange(e.target.value)}
-                  onFocus={() => {
-                    if (addressSuggestions.length > 0) {
-                      setShowSuggestions(true);
-                    }
-                  }}
-                  onBlur={() => {
-                    // Delay hiding suggestions to allow clicking on them
-                    setTimeout(() => setShowSuggestions(false), 200);
-                  }}
-                />
-                {isLoadingSuggestions && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="loading loading-spinner loading-sm"></div>
-                  </div>
-                )}
-                {filters.selectedCoordinates && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <div className="text-success text-sm">📍</div>
-                  </div>
-                )}
-              </div>
+            <div className="relative">
+              <input 
+                type="text" 
+                placeholder="e.g., Taksim, Istanbul" 
+                className="input input-bordered w-full pr-24"
+                value={filters.address}
+                onChange={(e) => handleAddressChange(e.target.value)}
+                onFocus={() => {
+                  if (addressSuggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => {
+                  // Delay hiding suggestions to allow clicking on them
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    searchNearbyParking();
+                  }
+                }}
+              />
               
-              {/* Show selected location indicator */}
-              {filters.selectedCoordinates && (
-                <div className="text-success text-xs mt-1 flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              {/* Loading spinner */}
+              {isLoadingSuggestions && (
+                <div className="absolute right-20 top-1/2 transform -translate-y-1/2">
+                  <div className="loading loading-spinner loading-sm"></div>
+                </div>
+              )}
+              
+              {/* Location ready indicator */}
+              {filters.selectedCoordinates && !location.loading && !isLoadingSuggestions && (
+                <div className="absolute right-20 top-1/2 transform -translate-y-1/2">
+                  <div className="text-success text-sm">📍</div>
+                </div>
+              )}
+              
+              {/* Find My Location Button - Inside Input */}
+              <button 
+                className={`absolute right-12 top-1/2 transform -translate-y-1/2 btn btn-ghost btn-sm btn-circle ${location.loading ? 'loading' : ''}`}
+                onClick={getCurrentLocation}
+                disabled={location.loading}
+                title="Find My Location"
+                type="button"
+              >
+                {!location.loading && (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                   </svg>
-                  Location selected from suggestions
-                </div>
-              )}
+                )}
+              </button>
               
-              {/* Address Suggestions Dropdown */}
-              {showSuggestions && addressSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                  {addressSuggestions.map((suggestion) => (
-                    <div
-                      key={suggestion.place_id}
-                      className="p-3 hover:bg-base-200 cursor-pointer border-b border-base-300 last:border-b-0"
-                      onClick={() => handleSuggestionSelect(suggestion)}
-                    >
-                      <div className="text-sm font-medium truncate">
-                        {suggestion.display_name.split(',').slice(0, 2).join(', ')}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {suggestion.display_name}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Search Button - Inside Input */}
+              <button 
+                className={`absolute right-2 top-1/2 transform -translate-y-1/2 btn btn-primary btn-sm btn-circle ${isSearching ? 'loading' : ''}`}
+                onClick={searchNearbyParking}
+                disabled={isSearching || !filters.address.trim()}
+                title="Search Parking"
+                type="button"
+              >
+                {!isSearching && (
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
             </div>
-          )}
-
-          {/* Current Location */}
-          {filters.useCurrentLocation && (
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Current Location</span>
-              </label>
-              <div className="flex items-center gap-4">
-                <button 
-                  className={`btn btn-outline ${location.loading ? 'loading' : ''}`}
-                  onClick={getCurrentLocation}
-                  disabled={location.loading}
-                >
-                  {location.loading ? 'Getting Location...' : 'Get Current Location'}
-                </button>
-                {location.error && (
-                  <div className="text-error text-sm">{location.error}</div>
-                )}
-                {location.latitude && location.longitude && (
-                  <div className="text-success text-sm">
-                    Location acquired ✓
-                  </div>
-                )}
+            
+            {/* Show selected location indicator */}
+            {filters.selectedCoordinates && (
+              <div className="text-success text-xs mt-1 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                Location ready for search
               </div>
-            </div>
-          )}
-
-          {/* Radius */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Search Radius: {filters.radiusKm} km</span>
-            </label>
-            <input 
-              type="range" 
-              min="0.5" 
-              max="10" 
-              step="0.5" 
-              value={filters.radiusKm} 
-              className="range range-primary" 
-              onChange={(e) => setFilters(prev => ({ ...prev, radiusKm: parseFloat(e.target.value) }))}
-            />
-            <div className="w-full flex justify-between text-xs px-2">
-              <span>0.5 km</span>
-              <span>5 km</span>
-              <span>10 km</span>
-            </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Sort by</span>
-            </label>
-            <select 
-              className="select select-bordered"
-              value={filters.sortBy}
-              onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value as 'distance' | 'availability' | 'price' }))}
-            >
-              <option value="distance">Distance</option>
-              <option value="availability">Available Spaces</option>
-              <option value="price">Price</option>
-            </select>
-          </div>
-
-          {/* Search Button */}
-          <div className="card-actions justify-end mt-4">
-            <button 
-              className={`btn btn-primary ${isSearching ? 'loading' : ''}`}
-              onClick={searchNearbyParking}
-              disabled={isSearching || (!filters.useCurrentLocation && !filters.address.trim()) || (filters.useCurrentLocation && !location.latitude)}
-            >
-              {isSearching ? 'Searching...' : 'Search'}
-            </button>
+            )}
+            
+            {/* Location Error */}
+            {location.error && (
+              <div className="text-error text-xs mt-1">{location.error}</div>
+            )}
+            
+            {/* Address Suggestions Dropdown */}
+            {showSuggestions && addressSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {addressSuggestions.map((suggestion) => (
+                  <div
+                    key={suggestion.place_id}
+                    className="p-3 hover:bg-base-200 cursor-pointer border-b border-base-300 last:border-b-0"
+                    onClick={() => handleSuggestionSelect(suggestion)}
+                  >
+                    <div className="text-sm font-medium truncate">
+                      {suggestion.display_name.split(',').slice(0, 2).join(', ')}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {suggestion.display_name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -498,7 +469,7 @@ export default function FindParkingPage() {
       {/* Search Results */}
       {searchResults.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Search Results ({searchResults.length} parking spaces)</h2>
+          <h2 className="text-2xl font-bold">Search Results ({searchResults.length} parking spaces within 2km)</h2>
           
           {searchResults.map((parking) => {
             const distance = location.latitude && location.longitude 
