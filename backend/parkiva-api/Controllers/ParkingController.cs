@@ -49,7 +49,6 @@ namespace parkiva_api.Controllers
 
         // POST: /api/parking
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<ParkingDto>>> Create([FromBody] CreateParkingDto dto)
         {
             if (!ModelState.IsValid)
@@ -61,7 +60,6 @@ namespace parkiva_api.Controllers
 
         // PUT: /api/parking/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<ParkingDto>>> Update(int id, [FromBody] CreateParkingDto dto)
         {
             if (!ModelState.IsValid)
@@ -76,7 +74,6 @@ namespace parkiva_api.Controllers
 
         // DELETE: /api/parking/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResponse<string>>> Delete(int id)
         {
             var deleted = await _service.DeleteAsync(id);
