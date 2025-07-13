@@ -37,6 +37,7 @@ export default function FindParkingPage() {
 
   const [searchResults, setSearchResults] = useState<ParkingDto[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchLocation, setSearchLocation] = useState<{ lat: number; lng: number } | null>(null); // Store the search location for distance calculation
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
@@ -258,6 +259,9 @@ export default function FindParkingPage() {
       // Call your API to search for nearby parking (fixed 2km radius)
       let results = await parkingApi.getNearby(searchLat, searchLng, 2);
       
+      // Store the search location for distance calculation
+      setSearchLocation({ lat: searchLat, lng: searchLng });
+      
       // Sort results by distance (fixed sorting)
       results = sortParkingResults(results, searchLat, searchLng, 'distance');
       
@@ -475,9 +479,11 @@ export default function FindParkingPage() {
           <h2 className="text-2xl font-bold">Search Results ({searchResults.length} parking spaces within 2km)</h2>
           
           {searchResults.map((parking) => {
-            const distance = location.latitude && location.longitude 
-              ? calculateDistance(location.latitude, location.longitude, parking.latitude, parking.longitude)
-              : 0;
+            const distance = searchLocation 
+              ? calculateDistance(searchLocation.lat, searchLocation.lng, parking.latitude, parking.longitude)
+              : (location.latitude && location.longitude 
+                ? calculateDistance(location.latitude, location.longitude, parking.latitude, parking.longitude)
+                : 0);
 
             return (
               <div key={parking.id} className="card bg-base-100 shadow-lg">
