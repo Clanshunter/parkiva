@@ -51,12 +51,12 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="navbar bg-base-100 shadow-lg">
+    <div className="navbar bg-base-100 shadow-lg px-2 sm:px-4">
       <div className="navbar-start">
         {/* Mobile menu dropdown */}
         <div className="dropdown">
-          <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-sm lg:hidden">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
             </svg>
           </div>
@@ -66,7 +66,7 @@ const Navbar = () => {
           >
             {navigationItems.map((item) => (
               <li key={item.name}>
-                <Link href={item.href} className="flex items-center gap-2">
+                <Link href={item.href} className="flex items-center gap-2 text-sm">
                   {item.icon}
                   {item.name}
                 </Link>
@@ -76,8 +76,9 @@ const Navbar = () => {
         </div>
         
         {/* Logo */}
-        <Link href="/" className="btn btn-ghost text-xl font-bold">
-          🅿️ Parkiva
+        <Link href="/" className="btn btn-ghost text-lg sm:text-xl font-bold">
+          <span className="hidden sm:inline">🅿️ Parkiva</span>
+          <span className="sm:hidden">🅿️ P</span>
         </Link>
       </div>
 
@@ -95,21 +96,21 @@ const Navbar = () => {
         </ul>
       </div>
 
-      <div className="navbar-end">
+      <div className="navbar-end flex items-center gap-2">
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="btn btn-ghost btn-circle"
+          className="btn btn-ghost btn-circle btn-sm sm:btn-md"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? (
             // Sun icon for light mode
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           ) : (
             // Moon icon for dark mode
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
             </svg>
           )}
@@ -117,9 +118,9 @@ const Navbar = () => {
 
         {/* User menu dropdown */}
         <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
-            <div className="w-10 rounded-full">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm sm:btn-md">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-base-300 flex items-center justify-center">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
@@ -129,13 +130,13 @@ const Navbar = () => {
             className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow"
           >
             <li>
-              <a className="justify-between">
+              <a className="justify-between text-sm">
                 Profile
-                <span className="badge">New</span>
+                <span className="badge badge-xs">New</span>
               </a>
             </li>
-            <li><a>Settings</a></li>
-            <li><a>Logout</a></li>
+            <li><a className="text-sm">Settings</a></li>
+            <li><a className="text-sm">Logout</a></li>
           </ul>
         </div>
       </div>

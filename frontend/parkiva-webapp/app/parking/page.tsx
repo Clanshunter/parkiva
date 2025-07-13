@@ -24,29 +24,29 @@ export default function ParkingPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="hero min-h-96 bg-base-200 rounded-lg">
-        <div className="hero-content text-center">
-          <div className="max-w-md">
-            <h1 className="text-5xl font-bold">🅿️ Parking</h1>
-            <p className="py-6">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="hero min-h-[24rem] sm:min-h-96 bg-base-200 rounded-lg">
+        <div className="hero-content text-center px-4 sm:px-6">
+          <div className="max-w-xs sm:max-w-md">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold">🅿️ Parking</h1>
+            <p className="py-4 sm:py-6 text-sm sm:text-base">
               Find and manage parking spaces in your area. Search by district to discover available parking options.
             </p>
             <div className="form-control w-full max-w-xs mx-auto">
               <label className="label">
-                <span className="label-text">Search by District</span>
+                <span className="label-text text-sm sm:text-base">Search by District</span>
               </label>
               <input 
                 type="text" 
                 placeholder="e.g., Kadikoy" 
-                className="input input-bordered w-full max-w-xs"
+                className="input input-bordered input-sm sm:input-md w-full"
                 value={searchDistrict}
                 onChange={(e) => setSearchDistrict(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
-              <div className="flex gap-2 mt-4">
+              <div className="flex flex-col sm:flex-row gap-2 mt-4">
                 <button 
-                  className="btn btn-primary flex-1" 
+                  className="btn btn-primary btn-sm sm:btn-md flex-1" 
                   onClick={handleSearch}
                   disabled={loading}
                 >
@@ -54,7 +54,7 @@ export default function ParkingPage() {
                 </button>
                 {filterDistrict && (
                   <button 
-                    className="btn btn-outline" 
+                    className="btn btn-outline btn-sm sm:btn-md" 
                     onClick={handleClearFilter}
                   >
                     Clear
@@ -66,13 +66,13 @@ export default function ParkingPage() {
         </div>
       </div>
 
-      <div className="mt-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">
+      <div className="mt-6 sm:mt-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold">
             {filterDistrict ? `Parking in ${filterDistrict}` : 'All Parking Areas'}
           </h2>
           <button 
-            className="btn btn-ghost btn-sm" 
+            className="btn btn-ghost btn-xs sm:btn-sm" 
             onClick={() => refetch()}
             disabled={loading}
           >
@@ -105,44 +105,44 @@ export default function ParkingPage() {
 
         {!loading && !error && parkingData.length > 0 && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {parkingData.map((parking: ParkingDto) => (
                 <div key={parking.id} className="card bg-base-100 shadow-xl">
-                  <div className="card-body">
-                    <h3 className="card-title">{parking.name}</h3>
-                    <p className="text-sm text-base-content/70">{parking.district}</p>
+                  <div className="card-body p-4 sm:p-6">
+                    <h3 className="card-title text-base sm:text-lg truncate">{parking.name}</h3>
+                    <p className="text-xs sm:text-sm text-base-content/70 truncate">{parking.district}</p>
                     
-                    <div className="space-y-2 mt-2">
-                      <div className="flex justify-between">
+                    <div className="space-y-1 sm:space-y-2 mt-2">
+                      <div className="flex justify-between text-sm">
                         <span>Total Spaces:</span>
                         <span className="font-semibold">{parking.totalSpaces}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span>Available:</span>
                         <span className={`font-semibold ${parking.availableSpaces > 0 ? 'text-success' : 'text-error'}`}>
                           {parking.availableSpaces}
                         </span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span>Price/Hour:</span>
                         <span className="font-semibold">₺{parking.pricePerHour}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span>Free Time:</span>
                         <span className="font-semibold">{parking.freeTime} min</span>
                       </div>
                     </div>
 
-                    <div className="card-actions justify-between items-center mt-4">
-                      <div className="flex gap-1">
+                    <div className="card-actions justify-between items-center mt-3 sm:mt-4">
+                      <div className="flex flex-wrap gap-1">
                         {parking.isReservable && (
-                          <div className="badge badge-success badge-sm">Reservable</div>
+                          <div className="badge badge-success badge-xs sm:badge-sm">Reservable</div>
                         )}
                         {parking.active && (
-                          <div className="badge badge-info badge-sm">Active</div>
+                          <div className="badge badge-info badge-xs sm:badge-sm">Active</div>
                         )}
                       </div>
-                      <button className="btn btn-primary btn-sm">View Details</button>
+                      <button className="btn btn-primary btn-xs sm:btn-sm">View Details</button>
                     </div>
                   </div>
                 </div>
@@ -150,13 +150,13 @@ export default function ParkingPage() {
             </div>
 
             {/* Districts Summary */}
-            <div className="mt-8">
-              <h3 className="text-xl font-bold mb-4">Available Districts</h3>
+            <div className="mt-6 sm:mt-8">
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Available Districts</h3>
               <div className="flex flex-wrap gap-2">
                 {getUniqueDistricts().map((district) => (
                   <button
                     key={district}
-                    className={`btn btn-sm ${filterDistrict === district ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn btn-xs sm:btn-sm ${filterDistrict === district ? 'btn-primary' : 'btn-outline'}`}
                     onClick={() => {
                       setSearchDistrict(district);
                       setFilterDistrict(district);
