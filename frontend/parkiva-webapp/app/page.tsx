@@ -17,11 +17,14 @@ export default function Home() {
               Your smart parking solution for Istanbul. Find, manage, and sync parking data with ease.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <Link href="/parking" className="btn btn-primary btn-sm sm:btn-md">
-                Find Parking
+              <Link href="/find-parking" className="btn btn-primary btn-sm sm:btn-md">
+                🔍 Find Nearby Parking
+              </Link>
+              <Link href="/parking" className="btn btn-secondary btn-sm sm:btn-md">
+                📋 All Parking
               </Link>
               <Link href="/sync" className="btn btn-outline btn-sm sm:btn-md">
-                Sync Data
+                🔄 Sync Data
               </Link>
             </div>
           </div>
