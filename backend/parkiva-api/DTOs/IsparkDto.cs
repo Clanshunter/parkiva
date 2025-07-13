@@ -11,7 +11,7 @@ namespace parkiva_api.DTOs
         public int Capacity { get; set; }
         public int EmptyCapacity { get; set; }
         public string WorkHours { get; set; }
-        public ParkType ParkType { get; set; }
+        public string ParkType { get; set; }
         public int FreeTime { get; set; }
         public string District { get; set; }
         public int IsOpen { get; set; }

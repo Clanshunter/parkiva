@@ -24,6 +24,7 @@ namespace parkiva_api.Controllers
             {
                 await _syncService.SyncAsync();
                 var response = new ApiResponse<object>(
+                   true,
                     "Ispark data synced successfully."
                 );
                 return Ok(response);
