@@ -1,11 +1,6 @@
-'use client';
-
 import Link from "next/link";
-import { useStats } from '@/hooks/useApi';
 
 export default function Home() {
-  const { stats, loading } = useStats();
-
   return (
     <div className="min-h-screen bg-base-100">
       {/* Hero Section */}
@@ -84,37 +79,19 @@ export default function Home() {
           <div className="stats shadow w-full">
             <div className="stat place-items-center">
               <div className="stat-title">Parking Spaces</div>
-              <div className="stat-value">
-                {loading ? (
-                  <span className="loading loading-spinner loading-md"></span>
-                ) : (
-                  stats.totalParkingSpaces.toLocaleString()
-                )}
-              </div>
+              <div className="stat-value">1,247</div>
               <div className="stat-desc">Across Istanbul</div>
             </div>
             
             <div className="stat place-items-center">
               <div className="stat-title">Districts Covered</div>
-              <div className="stat-value text-secondary">
-                {loading ? (
-                  <span className="loading loading-spinner loading-md"></span>
-                ) : (
-                  stats.districtsCovered
-                )}
-              </div>
+              <div className="stat-value text-secondary">39</div>
               <div className="stat-desc">All major areas</div>
             </div>
             
             <div className="stat place-items-center">
               <div className="stat-title">Active Users</div>
-              <div className="stat-value">
-                {loading ? (
-                  <span className="loading loading-spinner loading-md"></span>
-                ) : (
-                  `${stats.activeUsers.toLocaleString()}+`
-                )}
-              </div>
+              <div className="stat-value">2,500+</div>
               <div className="stat-desc">Growing daily</div>
             </div>
           </div>
