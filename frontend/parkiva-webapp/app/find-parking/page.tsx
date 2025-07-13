@@ -304,18 +304,21 @@ export default function FindParkingPage() {
     return R * c;
   };
 
-  // Navigate to parking location
-  const navigateToParking = (parking: ParkingDto, mapType: 'apple' | 'google') => {
+  // Navigate to parking location (auto-detect device)
+  const navigateToParking = (parking: ParkingDto) => {
     const lat = parking.latitude;
     const lng = parking.longitude;
     const destination = encodeURIComponent(parking.name);
 
-    if (mapType === 'apple') {
-      // Apple Maps
+    // Detect if user is on iOS (iPhone/iPad)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS) {
+      // Apple Maps for iOS devices
       const appleUrl = `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
       window.open(appleUrl, '_blank');
     } else {
-      // Google Maps
+      // Google Maps for Android/Desktop
       const googleUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&destination_place_id=${destination}`;
       window.open(googleUrl, '_blank');
     }
@@ -521,25 +524,16 @@ export default function FindParkingPage() {
                       </div>
                     </div>
 
-                    {/* Navigation Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-2 lg:flex-col">
+                    {/* Navigation Button */}
+                    <div className="flex justify-center lg:justify-end">
                       <button 
                         className="btn btn-primary btn-sm"
-                        onClick={() => navigateToParking(parking, 'google')}
+                        onClick={() => navigateToParking(parking)}
                       >
                         <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
-                        Google Maps
-                      </button>
-                      <button 
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => navigateToParking(parking, 'apple')}
-                      >
-                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                        </svg>
-                        Apple Maps
+                        Navigate
                       </button>
                     </div>
                   </div>
