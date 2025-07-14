@@ -2,7 +2,7 @@
 {
     public enum ParkingDataSource
     {
-        Ispark,
-        Manual
+        Ispark = 0,
+        Manual = 1
     }
 }

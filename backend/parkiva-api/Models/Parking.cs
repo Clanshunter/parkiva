@@ -27,5 +27,8 @@ namespace parkiva_api.Models
         public ParkingDataSource DataSource { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastSyncedAt { get; set; }
+
+
+        public ICollection<FavoriteParking> FavoriteParkings { get; set; }
     }
 }

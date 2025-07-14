@@ -16,6 +16,7 @@ namespace parkiva_api.Data
             // Add any additional model configurations here
         }
         public DbSet<Parking> Parkings { get; set; }
+        public DbSet<FavoriteParking> FavoriteParkings { get; set; }
 
     }
 }

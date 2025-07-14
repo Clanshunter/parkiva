@@ -3,6 +3,7 @@ using parkiva_api.Data;
 using parkiva_api.Services.Ispark.Api;
 using parkiva_api.Services.Ispark.Sync;
 using parkiva_api.Services.Parking;
+using parkiva_api.Services.FavoriteParking;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,8 @@ builder.Services.AddHttpClient<IIsparkService, IsparkService>(client =>
     client.BaseAddress = new Uri("https://api.ibb.gov.tr/ispark/Park");
 });
 builder.Services.AddScoped<IParkingService, ParkingService>();
+builder.Services.AddScoped<IFavoriteParkingService, FavoriteParkingService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
