@@ -10,54 +10,67 @@ namespace parkiva_api.Services.Ispark.Sync
     {
         private readonly AppDbContext _context;
         private readonly IIsparkService _isparkService;
-        public IsparkSyncService(AppDbContext context, IIsparkService isparkService)
+        private readonly ILogger<IIsparkSyncService> _logger;
+        public IsparkSyncService(AppDbContext context, IIsparkService isparkService, ILogger<IIsparkSyncService> logger)
         {
             _context = context;
             _isparkService = isparkService;
+            _logger = logger;
         }
 
         public async Task SyncAsync()
         {
             var items = await _isparkService.GetParkingsAsync();
+            var existingParkings = await _context.Parkings
+                .Where(p => p.ExternalId != null && p.DataSource == ParkingDataSource.Ispark)
+                .ToDictionaryAsync(p => p.ExternalId!.Value);
 
             foreach (var item in items)
             {
-                var parking = await _context.Parkings
-                    .FirstOrDefaultAsync(p => p.ExternalId == item.ParkID && p.DataSource == ParkingDataSource.Ispark);
-
-                if (parking == null)
+                try
                 {
-                    parking = new Models.Parking
+                    if (!existingParkings.TryGetValue(item.ParkID, out var parking))
                     {
-                        Active = true,
-                        ExternalId = item.ParkID,
-                        Name = item.ParkName,
-                        District = item.District,
-                        Latitude = item.Lat,
-                        Longitude = item.Lng,
-                        TotalSpaces = item.Capacity,
-                        AvailableSpaces = item.EmptyCapacity,
-                        OpenHours = item.WorkHours,
-                        IsReservable = false,
-                        PricePerHour = 0,
-                        CreatedAt = DateTime.UtcNow,
-                        DataSource = ParkingDataSource.Ispark,
-                        LastSyncedAt = DateTime.UtcNow,
-                        FreeTime = item.FreeTime,
-                        ParkType = ParkTypeParser.Parse(item.ParkType.ToString())
-                    };
-                    _context.Parkings.Add(parking);
+                        parking = new Models.Parking
+                        {
+                            Active = true,
+                            ExternalId = item.ParkID,
+                            Name = item.ParkName,
+                            District = item.District,
+                            Latitude = item.Lat,
+                            Longitude = item.Lng,
+                            TotalSpaces = item.Capacity,
+                            AvailableSpaces = item.EmptyCapacity,
+                            OpenHours = item.WorkHours,
+                            IsReservable = false,
+                            PricePerHour = 0,
+                            CreatedAt = DateTime.UtcNow,
+                            DataSource = ParkingDataSource.Ispark,
+                            LastSyncedAt = DateTime.UtcNow,
+                            FreeTime = item.FreeTime,
+                            ParkType = ParkTypeParser.Parse(item.ParkType.ToString())
+                        };
+                        _context.Parkings.Add(parking);
+                    }
+                    else
+                    {
+                        if (parking.AvailableSpaces != item.EmptyCapacity || parking.TotalSpaces != item.Capacity)
+                        {
+                            parking.AvailableSpaces = item.EmptyCapacity;
+                            parking.TotalSpaces = item.Capacity;
+                            parking.LastSyncedAt = DateTime.UtcNow;
+                        }
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-
-                    parking.AvailableSpaces = item.EmptyCapacity;
-                    parking.TotalSpaces = item.Capacity;
-                    parking.LastSyncedAt = DateTime.UtcNow;
+                    _logger.LogError(ex, $"Error syncing parking: {item.ParkID}");
                 }
             }
+
             await _context.SaveChangesAsync();
         }
+
 
     }
 }

@@ -31,7 +31,7 @@ namespace parkiva_api.Controllers
             }
             catch (Exception ex)
             {
-                var errorResponse = new ApiResponse<object>("An error occurred while syncing Ispark data.");
+                var errorResponse = new ApiResponse<object>(ex, "An error occurred while syncing Ispark data.");
                 return StatusCode(500, errorResponse);
             }
         }
